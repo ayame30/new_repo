@@ -1,13 +1,120 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PDF to CSV Converter</title>
+</head>
 <body>
-<p>Hello</p>
-555
-666
-777
-<p>Hello2</p>
-<p>Hello4</p>
-<p>Hello3</p>
-<h5>My Fifth Heading</h5>
+  <h2>Upload PDF files to extract text as CSV</h2>
+  <input type="file" id="pdf-files" accept=".pdf" multiple />
+  <button id="process-btn">Convert to CSV</button>
+  <br>
+
+  <br>
+  <label for="cols-textarea">Fields to extract (one per line):</label><br>
+
+  <textarea id="cols-textarea" rows="10" cols="50">FPS transaction no.:
+reference no.:
+Payment date:
+Payer:
+Payer bank/payment service provider:
+Payment amount:
+Account no. credited:
+Payee Proxy ID:
+Message to recipient:</textarea>
+  <br>
+  <pre id="output"></pre>
+
+  <br><br>
+  <a id="download-link" style="display:none;">Download CSV</a>
+  <script type="module">
+    import { PDFParse } from 'https://cdn.jsdelivr.net/npm/pdf-parse@latest/dist/pdf-parse/web/pdf-parse.es.js';
+    import {Parser} from 'https://cdn.jsdelivr.net/npm/@json2csv/plainjs@7.0.6/+esm'
+
+    // Set the worker path as required
+    PDFParse.setWorker('https://cdn.jsdelivr.net/npm/pdf-parse@latest/dist/pdf-parse/web/pdf.worker.mjs');
+
+    document.getElementById('process-btn').onclick = async function () {
+      const files = document.getElementById('pdf-files').files;
+      if (!files.length) {
+        alert('Please select PDF files!');
+        return;
+      }
+
+      // Get fields from textarea input (trim each, keep order, ignore empty lines)
+      const colsTextarea = document.getElementById('cols-textarea');
+      const cols = colsTextarea.value
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+
+      let csvContent = '';
+      const outputEl = document.getElementById('output');
+      outputEl.textContent = 'Processing...\n';
+
+      csvContent = cols.join(',') + "\n";
+
+      for (const file of files) {
+        const arrayBuffer = await file.arrayBuffer();
+        try {
+          const parser = new PDFParse({ data: arrayBuffer });
+          const pdfResult = await parser.getText();
+          // For compatibility, we expect pdfResult.text as plain text
+          const text = pdfResult.text;
+
+          // Split the text into lines and trim
+          const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+
+          // For each set of fields found per PDF, extract and append to csvContent
+          // If your PDFs may have more than one logical "page" per file, update here accordingly.
+
+          let colPointer = 0;
+          const rows = [];
+          let rowsPointer = 0;
+
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (rows.length <= rowsPointer) {
+                rows.push({});
+            }
+
+            if (line.startsWith(cols[colPointer])) {
+                const value = line.replace(cols[colPointer], '').trim();
+                rows[rowsPointer][cols[colPointer]] = value;
+                colPointer++;
+                if (colPointer > cols.length - 1) {
+                    rowsPointer++;
+                    colPointer = 0;
+                }
+            } else {
+                const matchErr = cols.filter((str, i) => i !== colPointer).some((str) => line.startsWith(str));
+                if (matchErr) {
+                    colPointer = 0;
+                    rowsPointer++;
+                }
+            }
+          }
+
+
+            const opts = {};
+            const parsercsv = new Parser(opts);
+            const csv = parsercsv.parse(rows);
+            console.log(csv);
+            outputEl.textContent = "Preview:\n" + csv;
+
+      // Download CSV
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const link = document.getElementById('download-link');
+      link.href = URL.createObjectURL(blob);
+      link.download = "pdf_contents.csv";
+      link.style.display = 'inline';
+      link.textContent = "Download CSV";
+
+        } catch (err) {
+          outputEl.textContent += `Error processing ${file.name}: ${err}\n`;
+        }
+      }
+    };
+  </script>
 </body>
 </html>
