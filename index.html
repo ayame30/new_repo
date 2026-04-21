@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <title>PDF to CSV Converter</title>
-  <script type="module" crossorigin src="/assets/index-CE-lfz6L.js"></script>
+  <script type="module" crossorigin src="/assets/index-DDEnCs-m.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/chunk-zsgVPwQN.js">
   <link rel="modulepreload" crossorigin href="/assets/preload-helper-DSXbuxSR.js">
 </head>
 <body>
-  <h2>Upload PDF files to extract text as CSV</h2>
+  <h2>Upload PDF files to extract text as XLSX</h2>
   <input type="file" id="pdf-files" accept=".pdf" multiple />
-  <button id="process-btn">Convert to CSV</button>
+  <button id="process-btn">Convert to XLSX</button>
   <br>
 
   <br>
   <label for="cols-textarea">Fields to extract (one per line):</label><br>
 
   <textarea id="cols-textarea" rows="10" cols="50">FPS transaction no.:
-reference no.:
+Payer bank/payment service provider reference no.:
 Payment date:
 Payer:
 Payer bank/payment service provider:
@@ -29,6 +29,7 @@ Message to recipient:</textarea>
   <pre id="output"></pre>
 
   <br><br>
-  <a id="download-link" style="display:none;">Download CSV</a>
+  <a id="download-link" style="display:none;">Download XLSX</a>
+
 </body>
 </html>
